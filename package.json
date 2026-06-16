@@ -1,0 +1,32 @@
+{
+  "name": "pena-umkm",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/bun": "latest",
+    "@types/pdfkit": "^0.17.6",
+    "@types/qrcode": "^1.5.6",
+    "drizzle-kit": "^0.31.10"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.4.2",
+    "@elysiajs/jwt": "^1.4.2",
+    "bcrypt": "^6.0.0",
+    "drizzle-orm": "^0.45.2",
+    "elysia": "^1.4.28",
+    "exceljs": "^4.4.0",
+    "mysql2": "^3.22.5",
+    "pdfkit": "^0.18.0",
+    "qrcode": "^1.5.4"
+  }
+}
