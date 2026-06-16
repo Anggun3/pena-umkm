@@ -1,44 +1,50 @@
-# Rencana Implementasi Proyek Backend
+# Issue: Inisialisasi Project, Setup Drizzle ORM, dan API Profil Toko (Shop Profile)
 
-Dokumen ini berisi instruksi tingkat tinggi (high-level) untuk menginisialisasi dan membangun proyek backend baru di direktori ini. Dokumen ini ditujukan bagi programmer atau AI model untuk mengimplementasikan dasar-dasar aplikasi.
-
-## 1. Inisialisasi Proyek
-- Lakukan inisialisasi project baru di dalam folder saat ini menggunakan **Bun** (misal: `bun init`).
-- Pastikan pengaturan `package.json` dan file konfigurasi TypeScript (jika menggunakan TS) sudah di-generate secara default oleh Bun.
-
-## 2. Instalasi Dependensi
-Gunakan package manager Bun (`bun install` / `bun add`) untuk menginstal library berikut:
-
-**Core Framework & Plugin:**
-- `elysia` (ElysiaJS sebagai web framework utama)
-- `@elysiajs/jwt` (untuk manajemen token JWT)
-- `@elysiajs/cors` (untuk pengaturan CORS)
-
-**Database & ORM:**
-- `drizzle-orm` (sebagai ORM)
-- `drizzle-kit` (sebagai development tool untuk migrasi skema database)
-- Driver MySQL yang kompatibel (misalnya `mysql2`)
-
-**Keamanan & Utilitas:**
-- `bcrypt` (atau library pendukung bcrypt lainnya untuk hashing password)
-- `qrcode` (untuk meng-generate QR code)
-- `exceljs` (untuk manajemen dan export/import file Excel)
-- `pdfkit` (untuk meng-generate dokumen PDF)
-
-## 3. Konfigurasi Database (MySQL + Drizzle)
-- Buat koneksi database ke **MySQL** menggunakan Drizzle.
-- Buat sebuah file skema database awal (schema) sebagai contoh struktur data.
-- Siapkan *migration script* di `package.json` untuk menjalankan *drizzle-kit*.
-
-## 4. Setup Server (ElysiaJS)
-- Buat file utama untuk menjalankan server aplikasi (contoh: `src/index.ts`).
-- Inisialisasi framework ElysiaJS.
-- Terapkan (register) plugin CORS dan JWT secara global pada instance Elysia.
-- Buat sebuah route dasar (contoh: `GET /`) yang me-return *health-check* atau pesan sederhana untuk memverifikasi bahwa server menyala dengan baik.
-
-## 5. Persiapan Utilitas
-- Buat folder khusus untuk utilitas/helpers.
-- Siapkan fungsi/modul dasar (stub) untuk fungsi hashing bcrypt, pembuatan QR code, pembuatan PDF, dan pembuatan Excel. Fungsi-fungsi ini nantinya akan dipanggil dari rute/kontroler yang sebenarnya.
+## Deskripsi Tugas
+Melakukan inisialisasi awal project menggunakan Bun dan ElysiaJS. Setup Drizzle ORM untuk menghubungkan ke database MySQL, lalu buat tabel `shop_profile` dan endpoint API untuk memperbarui profil toko UMKM (Admin).
 
 ---
-**Catatan untuk Implementator:** Fokus pada pembuatan struktur dasar yang bersih dan memastikan semua dependensi di atas dapat berjalan tanpa error ketika server dihidupkan. Tidak perlu menulis seluruh business logic (CRUD lengkap) pada tahap inisialisasi ini.
+
+## 1. Skema Tabel `shop_profile`
+Definisikan tabel `shop_profile` di Drizzle ORM dengan spesifikasi:
+- `id`: `integer`, primary key, default `1`
+- `shop_name`: `varchar(255)`, `not null`
+- `address`: `text`, `not null`
+- `phone`: `varchar(20)`, `not null`
+- `receipt_greeting`: `text`, default `null`
+
+---
+
+## 2. API Endpoint
+- **Method**: `PUT`
+- **Path**: `/api/admin/shop-profile`
+- **Request Body**:
+  ```json
+  {
+    "shop_name": "PenaUMKM Cabang Malang",
+    "address": "Jl. GKB IV UMM, Lowokwaru, Malang",
+    "phone": "08123456789",
+    "receipt_greeting": "Terima kasih sudah berbelanja di toko kami!"
+  }
+  ```
+- **Response Body (Success)**:
+  ```json
+  {
+    "data": "Profil toko berhasil diperbarui"
+  }
+  ```
+
+---
+
+## 3. Struktur Folder di dalam `src`
+- `routes`: berisi routing ElysiaJS (format: `shop-route.ts`)
+- `services`: berisi logic bisnis aplikasi (format: `shop-service.ts`)
+
+---
+
+## 4. Tahapan Implementasi
+1. Jalankan `bun init` dan pasang dependensi `elysia`, `drizzle-orm`, serta `mysql2`.
+2. Buat file skema Drizzle untuk mendefinisikan struktur tabel `shop_profile` dan jalankan migrasi database ke MySQL.
+3. Buat file `src/services/shop-service.ts`. Di dalamnya, tulis fungsi/class untuk melakukan operasi upsert (update jika data `id = 1` sudah ada, insert jika belum) menggunakan Drizzle.
+4. Buat file `src/routes/shop-route.ts`. Definisikan rute `PUT /api/admin/shop-profile`, validasi request body, lalu panggil fungsi dari `shop-service.ts`.
+5. Daftarkan router tersebut ke file utama aplikasi (`src/index.ts`).
