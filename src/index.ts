@@ -3,6 +3,7 @@ import { cors } from "@elysiajs/cors";
 import { jwt } from "@elysiajs/jwt";
 import { shopRoute } from "./routes/shop-route";
 import { usersRoute } from "./routes/users-route";
+import { authRoute } from "./routes/auth-route";
 
 const app = new Elysia()
   // Setup CORS secara global
@@ -23,6 +24,7 @@ const app = new Elysia()
   // Rute-rute API
   .use(shopRoute)
   .use(usersRoute)
+  .use(authRoute)
   // Rute dasar (health-check)
   .get("/", () => {
     return {
