@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1780805699324,
-      "tag": "0000_black_nomad",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1781588021426,
-      "tag": "0001_bright_zemo",
+      "when": 1781932498752,
+      "tag": "0000_lyrical_ted_forrester",
       "breakpoints": true
     }
   ]

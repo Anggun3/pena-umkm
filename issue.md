@@ -1,50 +1,46 @@
-# Issue: Inisialisasi Project, Setup Drizzle ORM, dan API Profil Toko (Shop Profile)
+Buat migrasi database untuk tabel users, lalu buat fungsi registrasi akun baru menggunakan enkripsi password.
 
-## Deskripsi Tugas
-Melakukan inisialisasi awal project menggunakan Bun dan ElysiaJS. Setup Drizzle ORM untuk menghubungkan ke database MySQL, lalu buat tabel `shop_profile` dan endpoint API untuk memperbarui profil toko UMKM (Admin).
-
----
-
-## 1. Skema Tabel `shop_profile`
-Definisikan tabel `shop_profile` di Drizzle ORM dengan spesifikasi:
-- `id`: `integer`, primary key, default `1`
-- `shop_name`: `varchar(255)`, `not null`
-- `address`: `text`, `not null`
-- `phone`: `varchar(20)`, `not null`
-- `receipt_greeting`: `text`, default `null`
+buat tabel users:
+id integer auto increment primary key
+name varchar 255 not null
+email varchar 255 not null unique
+password varchar 255 not null (password merupakan hash dari bcrypt)
+role enum('admin', 'kasir') not null default 'kasir'
+created_at timestamp default current_timestamp
 
 ---
 
-## 2. API Endpoint
-- **Method**: `PUT`
-- **Path**: `/api/admin/shop-profile`
-- **Request Body**:
-  ```json
-  {
-    "shop_name": "PenaUMKM Cabang Malang",
-    "address": "Jl. GKB IV UMM, Lowokwaru, Malang",
-    "phone": "08123456789",
-    "receipt_greeting": "Terima kasih sudah berbelanja di toko kami!"
-  }
-  ```
-- **Response Body (Success)**:
-  ```json
-  {
-    "data": "Profil toko berhasil diperbarui"
-  }
-  ```
+buat API untuk registrasi user baru
+
+Struktur Folder di dalam src:
+- routes: berisi routing elysia js (format: users-route.ts)
+- services: berisi logic bisnis aplikasi (format: users-service.ts)
+
+Endpoint : POST /api/users
+
+Request Body :
+{
+  "name": "Anggun Oktaviana",
+  "email": "AnggunOcta@gmail.com",
+  "password": "rahasia123",
+  "role": "kasir"
+}
+
+Response Body (Succes) :
+{
+  "data": "OK"
+}
+
+Response Body (Error) :
+{
+  "error": "Email sudah terdaftar"
+}
 
 ---
 
-## 3. Struktur Folder di dalam `src`
-- `routes`: berisi routing ElysiaJS (format: `shop-route.ts`)
-- `services`: berisi logic bisnis aplikasi (format: `shop-service.ts`)
-
----
-
-## 4. Tahapan Implementasi
-1. Jalankan `bun init` dan pasang dependensi `elysia`, `drizzle-orm`, serta `mysql2`.
-2. Buat file skema Drizzle untuk mendefinisikan struktur tabel `shop_profile` dan jalankan migrasi database ke MySQL.
-3. Buat file `src/services/shop-service.ts`. Di dalamnya, tulis fungsi/class untuk melakukan operasi upsert (update jika data `id = 1` sudah ada, insert jika belum) menggunakan Drizzle.
-4. Buat file `src/routes/shop-route.ts`. Definisikan rute `PUT /api/admin/shop-profile`, validasi request body, lalu panggil fungsi dari `shop-service.ts`.
-5. Daftarkan router tersebut ke file utama aplikasi (`src/index.ts`).
+Tahapan Implementasi Hands-on:
+1. Tambahkan definisi tabel `users` ke dalam skema Drizzle ORM Anda dan lakukan push/generate migrasi database.
+2. Buat file `src/services/users-service.ts`. Tulis fungsi asinkronus untuk menangani registrasi user.
+3. Di dalam service, lakukan pengecekan terlebih dahulu ke database apakah email sudah terdaftar. Jika sudah, lempar/return error.
+4. Jika email aman, gunakan library `bcrypt` untuk melakukan proses hashing pada string `password` sebelum disimpan. Simpan data user baru ke database MySQL via Drizzle.
+5. Buat file `src/routes/users-route.ts`. Inisialisasi router ElysiaJS, buat endpoint `POST /api/users`, tangkap request body, panggil service tersebut, dan handle return response sukses/error sesuai spesifikasi.
