@@ -7,6 +7,9 @@ import { usersRoute } from "./routes/users-route";
 import { authRoute } from "./routes/auth-route";
 import { adminProductsRoute } from "./routes/admin-products-route";
 import { productsRoute } from "./routes/products-route";
+import { transactionsRoute } from "./routes/transactions-route";
+import { dashboardRoute } from "./routes/dashboard-route";
+import { reportsRoute } from "./routes/reports-route";
 
 const app = new Elysia()
   // Static file server — sajikan folder /public secara publik
@@ -32,6 +35,9 @@ const app = new Elysia()
   .use(authRoute)
   .use(adminProductsRoute)
   .use(productsRoute)
+  .use(transactionsRoute)
+  .use(dashboardRoute)
+  .use(reportsRoute)
   // Rute dasar (health-check)
   .get("/", () => {
     return {
