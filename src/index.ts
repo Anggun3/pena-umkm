@@ -1,11 +1,16 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { jwt } from "@elysiajs/jwt";
+import { staticPlugin } from "@elysiajs/static";
 import { shopRoute } from "./routes/shop-route";
 import { usersRoute } from "./routes/users-route";
 import { authRoute } from "./routes/auth-route";
+import { adminProductsRoute } from "./routes/admin-products-route";
+import { productsRoute } from "./routes/products-route";
 
 const app = new Elysia()
+  // Static file server — sajikan folder /public secara publik
+  .use(staticPlugin({ assets: "public", prefix: "/public" }))
   // Setup CORS secara global
   .use(
     cors({
@@ -25,6 +30,8 @@ const app = new Elysia()
   .use(shopRoute)
   .use(usersRoute)
   .use(authRoute)
+  .use(adminProductsRoute)
+  .use(productsRoute)
   // Rute dasar (health-check)
   .get("/", () => {
     return {
