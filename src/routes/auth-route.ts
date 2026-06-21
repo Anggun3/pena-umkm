@@ -1,30 +1,19 @@
 import { Elysia, t } from "elysia";
-import { jwt } from "@elysiajs/jwt";
 import { AuthService } from "../services/auth-service";
-import { config } from "../config/env";
+import { authMiddleware } from "../middleware/auth-middleware";
 
 export const authRoute = new Elysia({ prefix: "/api/auth" })
-  .use(
-    jwt({
-      name: "jwt",
-      secret: config.jwtSecret,
-    })
-  )
+  // POST /api/auth/login — Login dan buat session baru
   .post(
     "/login",
-    async ({ body, jwt, set }) => {
+    async ({ body, set }) => {
       try {
-        const user = await AuthService.login(body.email, body.password);
-        
-        // Generate session token
-        const token = await jwt.sign({
-          id: user.id,
-          role: user.role,
-        });
-
+        const result = await AuthService.login(body.email, body.password);
         return {
-          token,
-          role: user.role,
+          data: {
+            token: result.token,
+            role: result.role,
+          },
         };
       } catch (error: any) {
         set.status = 400;
@@ -38,11 +27,15 @@ export const authRoute = new Elysia({ prefix: "/api/auth" })
       }),
     }
   )
-  .post(
-    "/logout",
-    async () => {
-      // Pada arsitektur stateless JWT, logout biasanya menghapus token di sisi klien.
-      // Di sini kita sekadar merespons status sukses untuk memicu klien melakukan pembersihan.
-      return { data: "Logout berhasil" };
+  // POST /api/auth/logout — Hapus session dari database
+  .use(authMiddleware)
+  .post("/logout", async ({ user, headers, set }) => {
+    if (!user) {
+      set.status = 401;
+      return { error: "Unauthorized: Token tidak valid atau tidak ditemukan" };
     }
-  );
+    const authHeader = headers["authorization"];
+    const token = authHeader!.substring(7);
+    await AuthService.logout(token);
+    return { data: "Logout berhasil" };
+  });

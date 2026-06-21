@@ -1,6 +1,5 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
-import { jwt } from "@elysiajs/jwt";
 import { staticPlugin } from "@elysiajs/static";
 import { shopRoute } from "./routes/shop-route";
 import { usersRoute } from "./routes/users-route";
@@ -22,13 +21,6 @@ const app = new Elysia()
       origin: true,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
-    })
-  )
-  // Setup JWT plugin secara global
-  .use(
-    jwt({
-      name: "jwt",
-      secret: config.jwtSecret,
     })
   )
   // Rute-rute API

@@ -1,30 +1,23 @@
 import { Elysia } from "elysia";
-import { jwt } from "@elysiajs/jwt";
-import { config } from "../config/env";
+import { AuthService } from "../services/auth-service";
 
+/**
+ * Middleware autentikasi berbasis session database.
+ * Membaca token dari header Authorization: Bearer <token>
+ * dan memverifikasi keberadaannya di tabel `sessions`.
+ */
 export const authMiddleware = new Elysia()
-  .use(
-    jwt({
-      name: "jwt",
-      secret: config.jwtSecret,
-    })
-  )
-  .derive({ as: "global" }, async ({ jwt, headers }) => {
+  .derive({ as: "global" }, async ({ headers }) => {
     const authHeader = headers["authorization"];
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return { user: null };
     }
     const token = authHeader.substring(7);
-    const payload = await jwt.verify(token);
-    if (!payload) {
+    const userData = await AuthService.verifySession(token);
+    if (!userData) {
       return { user: null };
     }
-    return {
-      user: {
-        id: Number(payload.id),
-        role: payload.role as "admin" | "kasir",
-      },
-    };
+    return { user: userData };
   });
 
 export const requireRoles = (roles: ("admin" | "kasir")[]) => {
