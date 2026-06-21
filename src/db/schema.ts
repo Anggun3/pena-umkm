@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, timestamp, int, mysqlEnum } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, timestamp, int, mysqlEnum, datetime } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -17,6 +17,13 @@ export const shopProfile = mysqlTable("shop_profile", {
   phone: varchar("phone", { length: 20 }).notNull(),
   receiptGreeting: text("receipt_greeting"),
 });
+
+export const sessions = mysqlTable("sessions", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id),
+  expiresAt: datetime("expires_at").notNull(),
+});
+
 
 export const products = mysqlTable("products", {
   id: int("id").autoincrement().primaryKey(),
