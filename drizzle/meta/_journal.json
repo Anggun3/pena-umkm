@@ -15,6 +15,13 @@
       "when": 1781937359665,
       "tag": "0001_bent_blur",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1781938508849,
+      "tag": "0002_outgoing_millenium_guard",
+      "breakpoints": true
     }
   ]
 }
