@@ -1,107 +1,80 @@
-Buat skema database relasional untuk menyimpan data penjualan, lalu implementasikan core engine transaksi kasir (Tunai & QRIS), webhook QRIS, ringkasan statistik admin, serta ekspor laporan keuangan cetak.
+# ISSUE: Inisialisasi Project, Setup Drizzle ORM, & Implementasi Fitur Profil Toko serta Autentikasi Lengkap (Registrasi, Login, Get User, Logout)
 
-buat tabel transactions:
-id integer auto increment primary key
-invoice_number varchar 50 not null unique
-cashier_id integer not null (foreign key ke users.id)
-total_amount integer not null
-payment_method enum('tunai', 'qris') not null
-payment_status enum('pending', 'lunas', 'batal') not null default 'pending'
-cash_received integer default 0
-cash_change integer default 0
-qris_payload text default null
-created_at timestamp default current_timestamp
-
-buat tabel transaction_details:
-id integer auto increment primary key
-transaction_id integer not null (foreign key ke transactions.id)
-product_id integer not null (foreign key ke products.id)
-quantity integer not null
-price integer not null
+## Deskripsi Perencanaan
+Lakukan inisialisasi awal project backend menggunakan Bun dan ElysiaJS. Setup Drizzle ORM untuk menghubungkan server ke database MySQL lokal (`pena_umkm`). Setelah itu, implementasikan skema basis data beserta API endpoint dengan arsitektur terpisah (Route & Service) untuk fitur Profil Toko dan manajemen Autentikasi pengguna secara menyeluruh.
 
 ---
 
-buat API untuk membuat transaksi penjualan baru (Checkout POS)
+## 1. Basis Data (MySQL via Drizzle ORM)
 
-Struktur Folder di dalam src:
-- routes: berisi routing elysia js (format: transactions-route.ts, dashboard-route.ts, reports-route.ts)
-- services: berisi logic bisnis aplikasi (format: transactions-service.ts, dashboard-service.ts, reports-service.ts)
+### A. Tabel `shop_profile`
+- **id**: integer (primary key, default nilai = `1`)
+- **shop_name**: varchar 255 (not null)
+- **address**: text (not null)
+- **phone**: varchar 20 (not null)
+- **receipt_greeting**: text (default null)
 
-Endpoint : POST /api/transactions
+### B. Tabel `users`
+- **id**: integer (auto increment, primary key)
+- **name**: varchar 255 (not null)
+- **email**: varchar 255 (not null, unique)
+- **password**: varchar 255 (not null) -> Hash bcrypt.
+- **role**: enum ('admin', 'kasir') (not null, default = 'kasir')
+- **created_at**: timestamp (default current_timestamp)
 
-Request Body :
-{
-  "payment_method": "qris",
-  "cash_received": 0,
-  "items": [
-    {
-      "product_id": 1,
-      "quantity": 2
-    }
-  ]
-}
-
-Logika Bisnis di dalam transactions-service.ts :
-1. Kurangi stok barang di tabel products sesuai kuantitas item yang dibeli secara atomik (Gunakan DB Transaction). Jika ada produk dengan stok tidak mencukupi, batalkan transaksi dan throw error.
-2. Jika payment_method tunai, lakukan validasi kelayakan nominal uang lalu hitung otomatis: cash_change = cash_received - total_amount. Set status menjadi 'lunas'.
-3. Jika payment_method qris, buat string payload invoice unik, lalu gunakan library `qrcode` untuk mengubah teks payload menjadi bentuk gambar Base64 string. Set status menjadi 'pending'.
-
-Response Body (Succes - QRIS) :
-{
-  "invoice_number": "INV-20260616-001",
-  "total_amount": 30000,
-  "payment_status": "pending",
-  "qris_base64": "data:image/png;base64,iVBOR..."
-}
-
-Response Body (Succes - Tunai) :
-{
-  "invoice_number": "INV-20260616-002",
-  "total_amount": 30000,
-  "payment_status": "lunas",
-  "cash_change": 20000
-}
+### C. Tabel `sessions`
+Digunakan untuk menyimpan token login aktif (Session-based Auth):
+- **id**: varchar 255 (primary key) -> Tempat menyimpan token session string / UUID.
+- **user_id**: integer (not null) -> Foreign key yang berelasi ke `users.id`.
+- **expires_at**: datetime (not null) -> Batas waktu masa aktif login.
 
 ---
 
-buat API Webhook Verifikasi Pembayaran QRIS Otomatis
-Endpoint : POST /api/webhook/qris-verify
-Request Body :
-{
-  "invoice_number": "INV-20260616-001",
-  "status": "SUCCESS"
-}
-Response Body : { "data": "Status transaksi berhasil diperbarui" }
+## 2. Spesifikasi API Endpoints
+
+### A. Perbarui Profil Toko (Admin)
+- **Method / Endpoint:** `PUT /api/admin/shop-profile`
+- **Request Body:** `{ "shop_name": "...", "address": "...", "phone": "...", "receipt_greeting": "..." }`
+- **Response Success (200):** `{ "data": "Profil toko berhasil diperbarui" }`
+
+### B. Registrasi User Baru
+- **Method / Endpoint:** `POST /api/users`
+- **Request Body:** `{ "name": "...", "email": "...", "password": "...", "role": "..." }`
+- **Response Success (201):** `{ "data": "OK" }`
+- **Response Error (400):** `{ "error": "Email sudah terdaftar" }`
+
+### C. Login User
+- **Method / Endpoint:** `POST /api/auth/login`
+- **Request Body:** `{ "email": "...", "password": "..." }`
+- **Response Success (200):** Menghasilkan session baru, menyimpan token di cookie/body, dan mengembalikan `{ "data": { "token": "..." } }`
+- **Response Error (401):** `{ "error": "Email atau password salah" }`
+
+### D. Get Current User (Cek Profil Aktif)
+- **Method / Endpoint:** `GET /api/users/me`
+- **Headers:** `Authorization: Bearer <token>` atau via Cookie Session.
+- **Response Success (200):** `{ "data": { "id": 1, "name": "Eko", "email": "eko@localhost", "role": "kasir" } }`
+
+### E. Log Out User
+- **Method / Endpoint:** `POST /api/auth/logout`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Success (200):** Menghapus data session dari tabel `sessions` dan mengembalikan `{ "data": "Logout berhasil" }`
 
 ---
 
-buat API untuk menampilkan riwayat transaksi kasir hari ini
-Endpoint : GET /api/transactions/today
-Response Body : List array objek transaksi harian kasir yang aktif.
+## 3. Struktur Folder dan File (di dalam `src`)
+- **`src/db/schema.ts`** -> Deklarasi skema tabel `shop_profile`, `users`, dan `sessions`.
+- **`src/services/shop-service.ts`** & **`src/services/auth-service.ts`** -> Logic bisnis aplikasi.
+- **`src/routes/shop-route.ts`** & **`src/routes/auth-route.ts`** -> Routing ElysiaJS & Validasi Input.
+- **`src/index.ts`** -> Entrypoint server utama.
 
 ---
 
-buat API untuk mengambil data ringkasan statistik dashboard bisnis utama admin
-Endpoint : GET /api/admin/dashboard/overview
-Response Body :
-{
-  "total_revenue_today": 1500000,
-  "total_transactions_today": 45,
-  "top_products": [{ "name": "Kopi Susu", "sold_quantity": 28 }]
-}
+## 4. Tahapan Implementasi Hands-on
 
----
-
-buat API untuk melakukan ekspor laporan ringkasan data finansial periodik toko
-1. Export Excel -> GET /api/admin/reports/excel?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD (Output: File Stream .xlsx)
-2. Export PDF -> GET /api/admin/reports/pdf?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD (Output: File Stream .pdf)
-
----
-
-Tahapan Implementasi Hands-on:
-1. Definisikan tabel `transactions` dan `transaction_details` ke database via Drizzle ORM.
-2. Buat file `src/services/transactions-service.ts`. Di dalamnya, tulis fungsi/class checkout kompleks menggunakan fitur database transaction (`db.transaction`). Implementasikan loop item untuk memotong kuantitas stok produk, kalkulasi matematika untuk total belanja dan nilai uang kembalian, serta integrasikan generator library `qrcode` untuk konversi payload ke format Base64 image string.
-3. Tulis fungsi handler untuk webhook verifikasi QRIS yang bertugas mencari record invoice terkait dan mengubah datanya menjadi 'lunas' jika pembayarannya terverifikasi sukses.
-4. Buat file `src/services/dashboard-service.ts`. Susun fungsi agregasi database menggunakan Drizzle (seperti fungsi `sum`, `count`, dan order pengelompokan `groupBy`) untuk merangkum total omset harian serta melacak peringkat produk paling laku terjual.
-5. Buat file `src/services/reports-service.ts`. Integrasikan library `exceljs` untuk memasukkan baris data mentah transaksi secara rapi ke file spreadsheet. Tulis juga logika generator dokumen menggunakan `pdfkit` dengan menyusun tata letak layout grid tabel keuangan statis yang rapi.
-6. Pasang dan hubungkan seluruh fungsi service ini ke masing-masing file routingnya (`transactions-route.ts`, `dashboard-route.ts`, `reports-route.ts`) di folder `src/routes/`. Pastikan diproteksi menggunakan middleware validasi token peran (role-based security) yang sesuai.
+### Langkah 1: Install Dependencies & Push Database
+```bash
+bun init
+bun add elysia drizzle-orm mysql2 bcrypt crypto
+bun add -d drizzle-kit @types/bcrypt
+bun drizzle-kit push
+```

@@ -42,4 +42,19 @@ export class ShopService {
       });
     }
   }
+
+  /**
+   * Ambil profil toko (selalu id=1).
+   * Kembalikan null jika belum diisi.
+   */
+  static async getShopProfile() {
+    const found = await db
+      .select()
+      .from(shopProfile)
+      .where(eq(shopProfile.id, 1))
+      .limit(1);
+
+    return found.length > 0 ? found[0] : null;
+  }
 }
+

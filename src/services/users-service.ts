@@ -40,4 +40,27 @@ export class UsersService {
       role: data.role,
     });
   }
+
+  /**
+   * Ambil data user berdasarkan ID (tanpa password).
+   */
+  static async getUserById(id: number) {
+    const found = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
+    if (found.length === 0) {
+      throw new Error("User tidak ditemukan");
+    }
+
+    return found[0];
+  }
 }
