@@ -10,6 +10,8 @@ import { productsRoute } from "./routes/products-route";
 import { transactionsRoute } from "./routes/transactions-route";
 import { dashboardRoute } from "./routes/dashboard-route";
 import { reportsRoute } from "./routes/reports-route";
+import { config } from "./config/env";
+import { pool } from "./db/db";
 
 const app = new Elysia()
   // Static file server — sajikan folder /public secara publik
@@ -26,7 +28,7 @@ const app = new Elysia()
   .use(
     jwt({
       name: "jwt",
-      secret: process.env.JWT_SECRET || "super_secret_jwt_key_change_me_in_production",
+      secret: config.jwtSecret,
     })
   )
   // Rute-rute API
@@ -46,9 +48,14 @@ const app = new Elysia()
       timestamp: new Date().toISOString(),
     };
   })
+  // Graceful shutdown database connection pool
+  .onStop(async () => {
+    await pool.end();
+    console.log("🦊 Database connection pool closed gracefully.");
+  })
   .listen({
-    port: process.env.PORT || 3000,
-    hostname: process.env.HOST || "0.0.0.0",
+    port: config.port,
+    hostname: config.host,
   });
 
 console.log(
@@ -56,3 +63,4 @@ console.log(
 );
 
 export type App = typeof app;
+
