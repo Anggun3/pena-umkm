@@ -1,12 +1,13 @@
 import { Elysia, t } from "elysia";
 import { jwt } from "@elysiajs/jwt";
 import { AuthService } from "../services/auth-service";
+import { config } from "../config/env";
 
 export const authRoute = new Elysia({ prefix: "/api/auth" })
   .use(
     jwt({
       name: "jwt",
-      secret: process.env.JWT_SECRET || "super_secret_jwt_key_change_me_in_production",
+      secret: config.jwtSecret,
     })
   )
   .post(

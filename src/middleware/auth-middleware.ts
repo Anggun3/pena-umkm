@@ -1,11 +1,12 @@
 import { Elysia } from "elysia";
 import { jwt } from "@elysiajs/jwt";
+import { config } from "../config/env";
 
 export const authMiddleware = new Elysia()
   .use(
     jwt({
       name: "jwt",
-      secret: process.env.JWT_SECRET || "super_secret_jwt_key_change_me_in_production",
+      secret: config.jwtSecret,
     })
   )
   .derive({ as: "global" }, async ({ jwt, headers }) => {
